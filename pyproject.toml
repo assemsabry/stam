@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stam_optimizer"
+version = "0.1.0"
+description = "Stable Training with Adaptive Momentum — JAX optimizer family"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+  {name = "Assem Sabry"},
+]
+keywords = [
+  "jax",
+  "optimizer",
+  "adam",
+  "adaptive-momentum",
+  "machine-learning",
+  "deep-learning",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "jax>=0.4.0",
+  "jaxlib>=0.4.0",
+  "optax>=0.1.7",
+  "numpy>=1.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "build",
+  "twine",
+]
+benchmarks = [
+  "matplotlib",
+  "scikit-learn",
+  "tensorflow-datasets",
+]
+
+[project.urls]
+Homepage = "https://github.com/assemsabry/stam"
+Repository = "https://github.com/assemsabry/stam"
+Issues = "https://github.com/assemsabry/stam/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["stam_optimizer*"]

@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+tests/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+
+# Benchmark outputs and generated reports
+results/
+results/*.json
+results/notebook_runs/*.json
+results/**/*.json
+notebooks/*_executed.ipynb
+
+# Datasets, checkpoints, and model artifacts
+data/
+datasets/
+checkpoints/
+artifacts/
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.npz
+*.npy
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
