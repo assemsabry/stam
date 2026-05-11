@@ -4,6 +4,10 @@
 
 A JAX-based optimizer family with variance-adaptive momentum for improved stability in non-stationary gradient regimes.
 
+<p align="center">
+  <img src="stam.png" width="800" alt="STAM Optimizer Illustration">
+</p>
+
 ## Overview
 
 STAM addresses a key limitation in Adam/AdamW: **fixed momentum** regardless of gradient behavior.
@@ -185,7 +189,7 @@ Before making performance claims, use real benchmarks and dedicated timing metho
 Use the dedicated fair timing runner for runtime comparisons:
 
 ```bash
-python stam_optimizer/benchmarks/fair_timing.py --optimizers stam_full,stam_lite,sgd_momentum,rmsprop,adagrad,nadam,lamb --seeds 2 --warmup-steps 5 --timed-steps 20 --output results/fair_timing.json
+python stam_optimizer/benchmarks/fair_timing.py --optimizers adamw,stam_full,stam_lite --seeds 2 --warmup-steps 5 --timed-steps 20 --output results/fair_timing.json
 ```
 
 This benchmark reports compilation time separately, excludes warmup steps, JIT-compiles the full train step for every optimizer, and calls `block_until_ready` after each measured step.
@@ -240,7 +244,12 @@ Poor LAMB behavior on small synthetic/local tasks should be treated as a task-re
 - Sparse gradients - undefined variance
 - Already stable training - no benefit from adaptation overhead
 
-## Benchmarking
+## Testing
+
+### Unit Tests
+```bash
+python stam_optimizer/tests/test_stam.py
+```
 
 ### MNIST Sanity Check
 ```bash
@@ -253,13 +262,11 @@ python stam_optimizer/benchmarks/phase1_runner.py --seeds 3 --epochs 20
 ```
 
 This runs:
+- AdamW
 - STAM-Full
 - STAM-Lite
-- SGD + Momentum
-- RMSProp
-- Adagrad
-- NAdam
-- LAMB
+- STAM-Fixed
+- STAM-ConstBeta
 
 Results are saved to:
 ```text
@@ -290,7 +297,7 @@ results/stress_shift.json
 
 For fair warmed timing tests, use:
 ```bash
-python stam_optimizer/benchmarks/fair_timing.py --optimizers stam_full,stam_lite,sgd_momentum,rmsprop,adagrad,nadam,lamb --seeds 2 --warmup-steps 5 --timed-steps 20
+python stam_optimizer/benchmarks/fair_timing.py --optimizers adamw,stam_full,stam_lite --seeds 2 --warmup-steps 5 --timed-steps 20
 ```
 
 Results are saved to:
@@ -319,6 +326,8 @@ stam_optimizer/
 ├── benchmarks/
 │   ├── mnist_sanity.py  # Quick sanity check
 │   └── __init__.py
+├── tests/
+│   └── test_stam.py     # Unit tests
 └── __init__.py
 ```
 
@@ -331,7 +340,7 @@ If you use STAM in your research, please cite:
   title={STAM: Stable Training with Adaptive Momentum},
   author={Your Name},
   year={2026},
-  url={https://github.com/assemsabry/stam}
+  url={https://github.com/yourusername/stam}
 }
 ```
 
