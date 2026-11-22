@@ -2,7 +2,7 @@
 
 **S**table **T**raining with **A**daptive **M**omentum
 
-A JAX-based optimizer family with variance-adaptive momentum for improved stability in non-stationary gradient regimes.
+An experimental JAX optimizer family that adapts first-moment momentum using tensor-level gradient statistics. STAM and STAMLite are research implementations; their performance and convergence advantages are not established for general workloads.
 
 <p align="center">
   <img src="stam.png" width="800" alt="STAM Optimizer Illustration">
@@ -141,10 +141,7 @@ This removes the residual computation, removes the `τ` EMA, replaces AdamW's pe
 
 ### Safety Mechanisms
 
-STAM includes multiple safety fallbacks:
-1. **NaN detection**: Falls back to base β₁ if variance is NaN/Inf
-2. **Variance explosion**: Caps variance at threshold × τ²
-3. **Bounds clamping**: β₁ always in [β₁_min, β₁_base]
+STAM uses a threshold to fall back to base β₁ when its variance signal is non-finite or exceeds the configured threshold, and bounds β₁ to a safe interval. Non-finite gradients are deliberately allowed to propagate so training failures remain visible; callers should check losses, gradients, and parameters for finiteness and apply their own recovery policy. These checks do not guarantee numerical stability for every model or dtype.
 
 ### Comparison with AdamW
 
@@ -228,27 +225,29 @@ Poor LAMB behavior on small synthetic/local tasks should be treated as a task-re
 
 ## When to Use STAM
 
-### STAM helps when:
+### Hypotheses to evaluate (not established guarantees):
 - Training with curriculum learning (task changes)
 - Early training phases with unstable gradients
 - Learning rate schedules with warmup/cooldown
 - Multi-modal or non-stationary loss landscapes
 
-### STAM is neutral when:
+Potentially neutral regimes to evaluate:
 - Late training convergence (stable gradients)
 - Well-conditioned optimization problems
 - Already using well-tuned SGD
 
-### STAM may not help when:
+Potential limitations to evaluate:
 - Very small batches (< 8) - noisy variance estimation
-- Sparse gradients - undefined variance
+- Sparse or highly structured gradients may make tensor-level statistics a poor fit
 - Already stable training - no benefit from adaptation overhead
 
 ## Testing
 
 ### Unit Tests
+Install the package and development dependencies, then run the full unit suite:
 ```bash
-python stam_optimizer/tests/test_stam.py
+python -m pip install -e ".[dev]"
+python -m pytest -q
 ```
 
 ### MNIST Sanity Check
@@ -316,19 +315,12 @@ This is the first real-data benchmark scaffold. It may download CIFAR-10 on firs
 
 ## Project Structure
 
-```
-stam_optimizer/
-├── core/
-│   ├── stam.py          # Main optimizer
-│   ├── stam_lite.py     # Memory-reduced optimizer
-│   ├── state.py         # State management
-│   └── __init__.py
-├── benchmarks/
-│   ├── mnist_sanity.py  # Quick sanity check
-│   └── __init__.py
-├── tests/
-│   └── test_stam.py     # Unit tests
-└── __init__.py
+```text
+.github/workflows/   CI and PyPI publishing workflows
+notebooks/           Experiment notebook (optional heavy runs are disabled by default)
+stam_optimizer/core/ STAM, STAMLite, and optimizer state
+stam_optimizer/benchmarks/ Synthetic and optional real-data benchmark runners
+tests/                Optimizer and Optax integration tests
 ```
 
 ## Citation
@@ -338,9 +330,9 @@ If you use STAM in your research, please cite:
 ```bibtex
 @software{stam_optimizer,
   title={STAM: Stable Training with Adaptive Momentum},
-  author={Your Name},
+  author={Assem Sabry},
   year={2026},
-  url={https://github.com/yourusername/stam}
+  url={https://github.com/assemsabry/stam}
 }
 ```
 

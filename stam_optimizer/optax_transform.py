@@ -12,14 +12,14 @@ class STAMOptaxState(NamedTuple):
 
 
 def _as_optax_transform(make_optimizer: Callable[[], Any]) -> optax.GradientTransformation:
+    optimizer = make_optimizer()
+
     def init_fn(params: Any) -> STAMOptaxState:
-        optimizer = make_optimizer()
         return STAMOptaxState(inner_state=optimizer.init(params))
 
     def update_fn(updates: Any, state: STAMOptaxState, params: Any = None):
         if params is None:
             raise ValueError("params must be provided for STAM optax transformations")
-        optimizer = make_optimizer()
         descent_updates, inner_state = optimizer.update(updates, state.inner_state, params)
         optax_updates = jax.tree_util.tree_map(lambda u: -u, descent_updates)
         return optax_updates, STAMOptaxState(inner_state=inner_state)

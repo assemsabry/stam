@@ -131,6 +131,8 @@ def train_one_run(
     weight_decay: float,
 ) -> RunResult:
     """Train one seed/config."""
+    if epochs < 1 or learning_rate <= 0 or weight_decay < 0:
+        raise ValueError("epochs and learning_rate must be positive; weight_decay non-negative")
     (x_train, y_train), (x_test, y_test) = make_synthetic_classification(seed)
     params = init_mlp_params(seed + 10_000, [64, 128, 64, 4])
     optimizer = build_optimizer(optimizer_name, learning_rate, weight_decay)

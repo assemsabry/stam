@@ -4,6 +4,7 @@ Extends AdamW with variance-adaptive momentum for improved stability
 in non-stationary gradient regimes.
 """
 
+from math import isfinite
 from typing import Any, NamedTuple, Optional, Tuple
 import jax
 import jax.numpy as jnp
@@ -72,12 +73,18 @@ class STAM:
         self.tau_decay = tau_decay
         self.fallback_threshold = fallback_threshold
         
+        if not all(isfinite(value) for value in (learning_rate, b1_base, b2, eps, weight_decay, adapt_strength, tau_decay, fallback_threshold)):
+            raise ValueError("all hyperparameters must be finite")
         if not 0.0 <= adapt_strength <= 0.5:
             raise ValueError("adapt_strength must be in [0, 0.5]")
         if not 0.0 < b1_base < 1.0:
             raise ValueError("b1_base must be in (0, 1)")
         if not 0.0 < b2 < 1.0:
             raise ValueError("b2 must be in (0, 1)")
+        if not 0.0 < tau_decay < 1.0:
+            raise ValueError("tau_decay must be in (0, 1)")
+        if learning_rate <= 0 or eps <= 0 or weight_decay < 0 or fallback_threshold <= 0:
+            raise ValueError("learning_rate, eps, and fallback_threshold must be positive; weight_decay must be non-negative")
         
     def init(self, params: Any) -> STAMState:
         """Initialize optimizer state.
@@ -194,7 +201,8 @@ def _stam_update_single(
     Returns:
         Tuple of (update, new_m, new_v, new_s, new_t, new_b1_prod)
     """
-    safe_g = jnp.nan_to_num(g, nan=0.0, posinf=0.0, neginf=0.0)
+    # Preserve non-finite gradients rather than concealing numerical failure.
+    safe_g = g
     residual = safe_g - m
     
     # Update tensor-level residual variance proxy

@@ -116,6 +116,8 @@ def build_optimizer(name: str, learning_rate: float, weight_decay: float):
 
 
 def run_cifar10(optimizer_name: str, seed: int, epochs: int, batch_size: int, output_path: str):
+    if epochs < 1 or batch_size < 1 or seed < 0:
+        raise ValueError("epochs and batch_size must be positive; seed non-negative")
     (x_train, y_train), (x_test, y_test) = load_cifar10()
     params = init_cnn_params(seed)
     optimizer = build_optimizer(optimizer_name, learning_rate=1e-3, weight_decay=0.01)

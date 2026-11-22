@@ -73,6 +73,8 @@ def time_optimizer(
     learning_rate: float,
     weight_decay: float,
 ) -> Dict[str, Any]:
+    if warmup_steps < 0 or timed_steps < 1:
+        raise ValueError("warmup_steps must be non-negative and timed_steps at least 1")
     (x_train, y_train), _ = make_synthetic_classification(seed)
     params = init_mlp_params(seed + 10_000, [64, 128, 64, 4])
     optimizer = _build_timing_optimizer(optimizer_name, learning_rate, weight_decay)
@@ -120,6 +122,8 @@ def run_fair_timing(
     timed_steps: int,
     output_path: str,
 ) -> Dict[str, Any]:
+    if not optimizers or not seeds:
+        raise ValueError("optimizers and seeds must not be empty")
     rows = []
     for optimizer_name in optimizers:
         for seed in seeds:
@@ -158,7 +162,7 @@ def run_fair_timing(
         "rows": rows,
         "summary": summary,
     }
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
     print(f"Saved results to {output_path}")
@@ -178,6 +182,8 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     optimizer_names = [x.strip() for x in args.optimizers.split(",") if x.strip()]
+    if args.seeds < 1:
+        raise SystemExit("--seeds must be at least 1")
     seed_values = list(range(args.seeds))
     run_fair_timing(
         optimizers=optimizer_names,

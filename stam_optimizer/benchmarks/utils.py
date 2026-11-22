@@ -66,18 +66,20 @@ def summarize_results(results: List[RunResult]) -> Dict[str, Any]:
 
 def save_results(results: List[RunResult], output_path: str) -> None:
     """Save run results and summary to JSON."""
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     payload = {
         "created_at_unix": time.time(),
         "runs": [asdict(r) for r in results],
         "summary": summarize_results(results),
     }
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
+        json.dump(payload, f, indent=2, allow_nan=False)
 
 
 def loss_stability(losses: List[float], tail_fraction: float = 0.2) -> float:
     """Compute loss standard deviation on the final part of training."""
+    if not np.isfinite(tail_fraction) or not 0.0 < tail_fraction <= 1.0:
+        raise ValueError("tail_fraction must be finite and in (0, 1]")
     if not losses:
         return 0.0
     tail_len = max(1, int(len(losses) * tail_fraction))
@@ -87,6 +89,10 @@ def loss_stability(losses: List[float], tail_fraction: float = 0.2) -> float:
 
 def timing_summary(step_times: List[float], warmup_steps: int = 3) -> Dict[str, float]:
     """Summarize timings while excluding first-step/JIT artifacts."""
+    if warmup_steps < 0:
+        raise ValueError("warmup_steps must be non-negative")
+    if any(not np.isfinite(value) or value < 0 for value in step_times):
+        raise ValueError("step_times must be finite and non-negative")
     if not step_times:
         return {"median_step_time": 0.0, "post_warmup_mean_step_time": 0.0}
     usable = step_times[min(warmup_steps, len(step_times) - 1):]

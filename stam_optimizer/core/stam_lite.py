@@ -1,5 +1,6 @@
 """STAM-Lite: efficient approximation of adaptive momentum."""
 
+from math import isfinite
 from typing import Any, NamedTuple, Optional, Tuple
 
 import jax.numpy as jnp
@@ -77,6 +78,10 @@ class STAMLite:
         self.beta1_update_interval = beta1_update_interval
         self.state_dtype = jnp.dtype(state_dtype)
 
+        if not all(isfinite(value) for value in (learning_rate, b1_base, eps, weight_decay, adapt_strength, moment_decay)):
+            raise ValueError("all hyperparameters must be finite")
+        if not isinstance(beta1_update_interval, int) or isinstance(beta1_update_interval, bool):
+            raise ValueError("beta1_update_interval must be an integer")
         if not 0.0 <= adapt_strength <= 0.5:
             raise ValueError("adapt_strength must be in [0, 0.5]")
         if not 0.0 < b1_base < 1.0:
@@ -85,6 +90,8 @@ class STAMLite:
             raise ValueError("moment_decay must be in (0, 1)")
         if beta1_update_interval < 1:
             raise ValueError("beta1_update_interval must be >= 1")
+        if learning_rate <= 0 or eps <= 0 or weight_decay < 0:
+            raise ValueError("learning_rate and eps must be positive; weight_decay must be non-negative")
 
     def init(self, params: Any) -> STAMLiteState:
         """Initialize optimizer state."""
@@ -157,7 +164,8 @@ def _stam_lite_update_single(
     beta1_update_interval: int,
 ) -> _STAMLiteUpdateResult:
     """Update one tensor for STAM-Lite."""
-    safe_g = jnp.nan_to_num(g, nan=0.0, posinf=0.0, neginf=0.0)
+    # Propagate non-finite gradients so callers can fail fast or recover explicitly.
+    safe_g = g
     compute_dtype = safe_g.dtype
     m_compute = m.astype(compute_dtype)
     grad_mean_compute = grad_mean.astype(compute_dtype)

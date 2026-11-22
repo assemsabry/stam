@@ -103,6 +103,8 @@ def run_one(
     learning_rate: float,
     weight_decay: float,
 ) -> RunResult:
+    if batch_size < 1 or steps < 1 or seed < 0 or learning_rate <= 0 or weight_decay < 0:
+        raise ValueError("batch_size, steps, learning_rate must be positive; seed and weight_decay non-negative")
     x, y = make_shifted_dataset(seed)
     params = init_mlp_params(seed + 1000, [64, 128, 64, 4])
     optimizer = build_optimizer(optimizer_name, learning_rate, weight_decay)
