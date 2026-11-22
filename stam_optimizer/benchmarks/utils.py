@@ -1,6 +1,7 @@
 """Benchmark utilities for STAM experiments."""
 
 import json
+import math
 import os
 import time
 from dataclasses import asdict, dataclass
@@ -9,6 +10,25 @@ from typing import Any, Dict, List
 import jax
 import jax.numpy as jnp
 import numpy as np
+
+
+_T_95_CRITICAL = {
+    1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+    6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+    11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131,
+    16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093, 20: 2.086,
+    21: 2.080, 22: 2.074, 23: 2.069, 24: 2.064, 25: 2.060,
+    26: 2.056, 27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042,
+}
+
+
+def _mean_95ci_half_width(values: np.ndarray) -> float:
+    """Return a two-sided Student-t 95% CI half-width for a sample mean."""
+    n = len(values)
+    if n < 2:
+        return 0.0
+    critical = _T_95_CRITICAL.get(n - 1, 1.96)
+    return float(critical * values.std(ddof=1) / math.sqrt(n))
 
 
 @dataclass
@@ -42,16 +62,14 @@ def summarize_results(results: List[RunResult]) -> Dict[str, Any]:
         post_warmup_times = np.array([r.post_warmup_mean_step_time for r in runs], dtype=np.float64)
         stability = np.array([r.loss_stability_std for r in runs], dtype=np.float64)
         n = len(runs)
-        ci_scale = 1.96 / np.sqrt(max(n, 1))
-
         summary[optimizer] = {
             "runs": n,
             "final_loss_mean": float(final_losses.mean()),
             "final_loss_std": float(final_losses.std(ddof=1)) if n > 1 else 0.0,
-            "final_loss_95ci": float(ci_scale * final_losses.std(ddof=1)) if n > 1 else 0.0,
+            "final_loss_95ci": _mean_95ci_half_width(final_losses),
             "final_accuracy_mean": float(final_accs.mean()),
             "final_accuracy_std": float(final_accs.std(ddof=1)) if n > 1 else 0.0,
-            "final_accuracy_95ci": float(ci_scale * final_accs.std(ddof=1)) if n > 1 else 0.0,
+            "final_accuracy_95ci": _mean_95ci_half_width(final_accs),
             "mean_epoch_time": float(times.mean()),
             "median_step_time": float(median_step_times.mean()),
             "post_warmup_mean_step_time": float(post_warmup_times.mean()),

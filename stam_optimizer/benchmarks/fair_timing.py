@@ -100,6 +100,8 @@ def time_optimizer(
         losses.append(float(loss))
 
     arr = np.array(step_seconds, dtype=np.float64)
+    if not np.all(np.isfinite(arr)) or any(not np.isfinite(loss) for loss in losses):
+        raise FloatingPointError(f"Non-finite timing or loss observed for {optimizer_name} seed={seed}")
     return {
         "optimizer": optimizer_name,
         "seed": seed,
@@ -164,7 +166,7 @@ def run_fair_timing(
     }
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
+        json.dump(payload, f, indent=2, allow_nan=False)
     print(f"Saved results to {output_path}")
     return payload
 

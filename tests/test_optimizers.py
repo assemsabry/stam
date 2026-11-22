@@ -135,3 +135,16 @@ def test_benchmark_helpers_validate_inputs():
         timing_summary([0.1], -1)
     with pytest.raises(ValueError, match="finite and non-negative"):
         timing_summary([float("nan")])
+
+
+def test_benchmark_confidence_interval_uses_small_sample_t_critical_value():
+    from stam_optimizer.benchmarks.utils import RunResult, summarize_results
+
+    runs = [
+        RunResult("bench", "optimizer", i, loss, 0.5, 1.0, 0.1, 0.01, 0.01, 0.0, [], [])
+        for i, loss in enumerate([1.0, 2.0, 3.0])
+    ]
+    summary = summarize_results(runs)["optimizer"]
+    # For n=3, df=2 and the 95% two-sided t critical value is 4.303.
+    assert summary["final_loss_95ci"] == pytest.approx(4.303 / 3**0.5)
+    assert summary["final_loss_95ci"] > 1.96 / 3**0.5

@@ -127,7 +127,7 @@ def run_cifar10(optimizer_name: str, seed: int, epochs: int, batch_size: int, ou
     accuracies: List[float] = []
     times: List[float] = []
     key = random.PRNGKey(seed + 1000)
-    steps_per_epoch = max(1, x_train.shape[0] // batch_size)
+    steps_per_epoch = (x_train.shape[0] + batch_size - 1) // batch_size
 
     for epoch in range(epochs):
         key, perm_key = random.split(key)
