@@ -11,7 +11,7 @@ Run:
 import argparse
 import os
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import jax
 import jax.numpy as jnp

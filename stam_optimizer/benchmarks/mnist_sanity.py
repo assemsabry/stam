@@ -4,11 +4,9 @@ Quick 5-minute test to verify STAM doesn't break.
 """
 
 import time
-from typing import Tuple
-
 import jax
 import jax.numpy as jnp
-from jax import random, jit, grad
+from jax import random
 import optax
 
 from stam_optimizer import STAM

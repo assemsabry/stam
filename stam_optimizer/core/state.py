@@ -1,9 +1,8 @@
 """STAM optimizer state management."""
 
 from typing import Any, NamedTuple
-import jax
 import jax.numpy as jnp
-from jax.tree_util import tree_map, tree_structure
+from jax.tree_util import tree_map
 
 
 class STAMState(NamedTuple):
@@ -33,12 +32,10 @@ def init_stam_state(params: Any) -> STAMState:
     Returns:
         Initial STAMState
     """
-    zeros_like = lambda x: jnp.zeros_like(x)
-    
     return STAMState(
         count=jnp.zeros([], dtype=jnp.int32),
-        mu=tree_map(zeros_like, params),
-        nu=tree_map(zeros_like, params),
+        mu=tree_map(jnp.zeros_like, params),
+        nu=tree_map(jnp.zeros_like, params),
         sigma_sq=tree_map(lambda x: jnp.zeros([], dtype=x.dtype), params),
         tau=tree_map(lambda x: jnp.zeros([], dtype=x.dtype), params),
         b1_prod=tree_map(lambda x: jnp.ones([], dtype=x.dtype), params)

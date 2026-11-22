@@ -253,7 +253,9 @@ def _stam_lite_update(
         params,
     )
 
-    is_update_result = lambda x: isinstance(x, _STAMLiteUpdateResult)
+    def is_update_result(x):
+        return isinstance(x, _STAMLiteUpdateResult)
+
     updates = tree_map(lambda r: r.update, results, is_leaf=is_update_result)
     mu_new = tree_map(lambda r: r.mu, results, is_leaf=is_update_result)
     grad_mean_new = tree_map(lambda r: r.grad_mean, results, is_leaf=is_update_result)

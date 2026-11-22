@@ -6,7 +6,6 @@ in non-stationary gradient regimes.
 
 from math import isfinite
 from typing import Any, NamedTuple, Optional, Tuple
-import jax
 import jax.numpy as jnp
 from jax import jit
 from jax.tree_util import tree_map
@@ -277,7 +276,9 @@ def _stam_update(
         params,
     )
 
-    is_update_result = lambda x: isinstance(x, _STAMUpdateResult)
+    def is_update_result(x):
+        return isinstance(x, _STAMUpdateResult)
+
     updates = tree_map(lambda r: r.update, results, is_leaf=is_update_result)
     mu_new = tree_map(lambda r: r.mu, results, is_leaf=is_update_result)
     nu_new = tree_map(lambda r: r.nu, results, is_leaf=is_update_result)
